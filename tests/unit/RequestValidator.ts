@@ -193,15 +193,15 @@ describe('RequestValidator', () => {
         validator.validate(req, null, (err: any) => {
             expect(err).to.equal(undefined, 'Error should be undefined');
             expect(typeof req.body.startedAt).to.be.equal('object');
-            expect(typeof (<any> req.body.startedAt).getTime).to.be.equal('function');
-            expect((<any> req.body.startedAt).getTime()).to.be.equal(Date.parse(date));
+            expect(typeof req.body.startedAt.getTime).to.be.equal('function');
+            expect(req.body.startedAt.getTime()).to.be.equal(Date.parse(date));
 
             // double date validation
             validator.validate(req, null, (e: any) => {
                 expect(e).to.equal(undefined, 'Error should be undefined');
                 expect(typeof req.body.startedAt).to.be.equal('object');
-                expect(typeof (<any> req.body.startedAt).getTime).to.be.equal('function');
-                expect((<any> req.body.startedAt).getTime()).to.be.equal(Date.parse(date));
+                expect(typeof req.body.startedAt.getTime).to.be.equal('function');
+                expect(req.body.startedAt.getTime()).to.be.equal(Date.parse(date));
             });
         });
     });
