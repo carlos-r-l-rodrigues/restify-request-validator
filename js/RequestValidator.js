@@ -2,13 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var ParamValidation_1 = require("./ParamValidation");
 var supportedNumericTypes = ['number', 'numeric', 'integer'];
-var supportedTypes = [
-    'string',
-    'boolean',
-    'date',
-    'array',
-    'object'
-].concat(supportedNumericTypes);
+var supportedTypes = ['string', 'boolean', 'date', 'array', 'object'].concat(supportedNumericTypes);
 var RequestValidator = (function () {
     function RequestValidator(errorHandler) {
         if (errorHandler === void 0) { errorHandler = Error; }
@@ -123,9 +117,7 @@ var RequestValidator = (function () {
                 if (paramValidation) {
                     var type = input ? typeof input[key] : undefined;
                     if (type === 'string' && inUrl && paramValidation.type === 'array') {
-                        input[key] = input[key]
-                            .split(',')
-                            .filter(function (element) { return element.length > 0; });
+                        input[key] = input[key].split(',').filter(function (element) { return element.length > 0; });
                         if (input[key].length === 0) {
                             input[key] = null;
                         }
@@ -136,9 +128,7 @@ var RequestValidator = (function () {
                             return "break";
                         }
                         if (paramValidation.terminal instanceof Array) {
-                            if (errorMessages.every(function (error) {
-                                return paramValidation.terminal.indexOf(error.constraint) !== -1;
-                            })) {
+                            if (errorMessages.every(function (error) { return paramValidation.terminal.indexOf(error.constraint) > -1; })) {
                                 return "break";
                             }
                         }
@@ -238,24 +228,21 @@ var RequestValidator = (function () {
             return isNumeric;
         }
         else if (typeValidation.type === 'boolean') {
-            var isBoolean = ['0', '1', 'false', 'true', false, true, 0, 1].indexOf(typeValidation.value) !== -1;
+            var isBoolean = ['0', '1', 'false', 'true', false, true, 0, 1].indexOf(typeValidation.value) > -1;
             if (isBoolean === true) {
-                typeValidation.value =
-                    ['1', 'true', true, 1].indexOf(typeValidation.value) !== -1;
+                typeValidation.value = !!isBoolean;
             }
             return isBoolean;
         }
         else if (typeValidation.type === 'date') {
-            if (typeof typeValidation.value === 'object' &&
-                typeof typeValidation.value.getTime === 'function') {
+            if (typeof typeValidation.value === 'object' && typeof typeValidation.value.getTime === 'function') {
                 return true;
             }
             var milliseconds = Date.parse(typeValidation.value);
             if (isNaN(milliseconds)) {
                 return false;
             }
-            typeValidation.value = new Date();
-            typeValidation.value.setTime(milliseconds);
+            typeValidation.value = new Date(milliseconds);
             return true;
         }
         else if (typeValidation.type === 'array') {
@@ -269,7 +256,10 @@ var RequestValidator = (function () {
         }
         for (var i = 0; i < input.length; i += 1) {
             var typeVal = { value: input[i], type: type };
-            if (RequestValidator.checkType(typeVal) !== true) {
+            if (typeVal.value instanceof Array) {
+                this.checkArrayType(typeVal.value, type);
+            }
+            else if (RequestValidator.checkType(typeVal) !== true) {
                 return false;
             }
             input[i] = typeVal.value;
