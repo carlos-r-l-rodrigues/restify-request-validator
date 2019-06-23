@@ -201,13 +201,7 @@ var RequestValidator = (function () {
     };
     RequestValidator.prototype.getPrioritizedValidationKeys = function (validation) {
         return Object.keys(validation).sort(function (a, b) {
-            if (validation[a].terminal && validation[a].terminal !== false) {
-                return -1;
-            }
-            if (validation[b].terminal && validation[b].terminal !== false) {
-                return 1;
-            }
-            return 0;
+            return +!!validation[b].terminal - +!!validation[a].terminal;
         });
     };
     RequestValidator.checkType = function (typeValidation) {
