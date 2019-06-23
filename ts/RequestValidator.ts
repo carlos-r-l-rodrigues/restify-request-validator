@@ -404,7 +404,9 @@ export class RequestValidator {
         }
         for (let i: number = 0; i < input.length; i += 1) {
             const typeVal: TypeValidation = { value: input[i], type };
-            if (RequestValidator.checkType(typeVal) !== true) {
+            if (typeVal.value instanceof Array) {
+                this.checkArrayType(typeVal.value, type);
+            } else if (RequestValidator.checkType(typeVal) !== true) {
                 return false;
             }
             input[i] = typeVal.value;

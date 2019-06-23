@@ -965,6 +965,19 @@ describe('RequestValidator', () => {
                 numberList: ['1', '3', '9'],
                 priceList: ['1.78', '3.49', '9.6987'],
                 intList: ['1.78', '3.49', '9.6987'],
+                multDimension: [
+                    '1.78',
+                    '3.49',
+                    [
+                        '9.6987',
+                        [
+                            '17',
+                            '21.8888',
+                            '1.7'
+                        ],
+                        '58.7'
+                    ]
+                ],
                 doubleValue: '154.784987',
                 integerVal: '154.98'
             };
@@ -980,6 +993,7 @@ describe('RequestValidator', () => {
                                 numberList: {type: 'array', required: true, arrayType: 'numeric'},
                                 priceList: {type: 'array', required: true, arrayType: 'number'},
                                 intList: {type: 'array', required: true, arrayType: 'integer'},
+                                multDimension: {type: 'array', required: true, arrayType: 'number'},
                                 doubleValue: {type: 'numeric', required: true},
                                 integerVal: { type: 'integer', required: true}
                             }
@@ -998,6 +1012,7 @@ describe('RequestValidator', () => {
                 numberList: [1, 3, 9],
                 priceList: [1.78, 3.49, 9.6987],
                 intList: [1, 3, 9],
+                multDimension: [1.78, 3.49, [9.6987, [17, 21.8888, 1.7], 58.7]],
                 doubleValue: 154.784987,
                 integerVal: 154
             });
