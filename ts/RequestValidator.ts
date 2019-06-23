@@ -1,7 +1,7 @@
-import {ParamValidation} from './ParamValidation';
+import { ParamValidation } from './ParamValidation';
 
-const supportedTypes = ['string', 'number', 'boolean', 'numeric', 'date', 'array', 'object'];
-const supportedArrayTypes = ['string', 'number', 'boolean', 'numeric'];
+const supportedNumericTypes: string[] = ['number', 'numeric', 'integer'];
+const supportedTypes: string[] = ['string', 'boolean', 'date', 'array', 'object', ...supportedNumericTypes];
 
 // tslint:disable:no-reserved-keywords no-any
 interface TypeValidation {
@@ -36,6 +36,7 @@ export class RequestValidator {
                 isCustom: true
             };
         }
+
         return {
             message: defaultMessage,
             constraint: errorType,
@@ -54,20 +55,35 @@ export class RequestValidator {
             let errorMessages: string[] = [];
             if (req.route.validation.hasOwnProperty('url')) {
                 errorMessages = errorMessages.concat(
-                    this.validateFields(req.params, req.route.validation.url, true)
-                        .map(msg => msg.isCustom ? msg.message : `Url: ${msg.message}`)
+                    this.validateFields(
+                        req.params,
+                        req.route.validation.url,
+                        true
+                    ).map((msg: any) =>
+                        msg.isCustom ? msg.message : `Url: ${msg.message}`
+                    )
                 );
             }
             if (req.route.validation.hasOwnProperty('query')) {
                 errorMessages = errorMessages.concat(
-                    this.validateFields(req.query, req.route.validation.query, true)
-                        .map(msg => msg.isCustom ? msg.message : `Query: ${msg.message}`)
+                    this.validateFields(
+                        req.query,
+                        req.route.validation.query,
+                        true
+                    ).map((msg: any) =>
+                        msg.isCustom ? msg.message : `Query: ${msg.message}`
+                    )
                 );
             }
             if (req.route.validation.hasOwnProperty('body')) {
                 errorMessages = errorMessages.concat(
-                    this.validateFields(req.params, req.route.validation.body, false)
-                        .map(msg => msg.isCustom ? msg.message : `Body: ${msg.message}`)
+                    this.validateFields(
+                        req.body,
+                        req.route.validation.body,
+                        false
+                    ).map((msg: any) =>
+                        msg.isCustom ? msg.message : `Body: ${msg.message}`
+                    )
                 );
             }
 
@@ -77,6 +93,7 @@ export class RequestValidator {
                 } else {
                     next(new this.errorHandler(errorMessages.join('\n')));
                 }
+
                 return;
             }
         }
@@ -88,7 +105,7 @@ export class RequestValidator {
         if (!validation.hasOwnProperty('type') || supportedTypes.indexOf(validation.type) < 0) {
             return null;
         }
-        const paramValidation = new ParamValidation();
+        const paramValidation: ParamValidation = new ParamValidation();
         paramValidation.type = validation.type;
 
         // Add "required" param
@@ -115,7 +132,7 @@ export class RequestValidator {
         }
 
         // Add "arrayType" param
-        if (validation.hasOwnProperty('arrayType') && supportedArrayTypes.indexOf(validation.arrayType) >= 0) {
+        if (validation.hasOwnProperty('arrayType')) {
             paramValidation.arrayType = validation.arrayType;
         }
 
@@ -149,7 +166,9 @@ export class RequestValidator {
             if (validation.hasOwnProperty('disallowExtraFields')) {
                 if (validation.disallowExtraFields === true && input) {
                     // Check whether input has fields not present on validation
-                    const difference = Object.keys(input).filter(x => Object.keys(validation).indexOf(x) === -1);
+                    const difference: any = Object.keys(input).filter(
+                        (x: any) => Object.keys(validation).indexOf(x) === -1
+                    );
                     if (difference.length > 0) {
                         errorMessages = errorMessages.concat(
                             this.getErrorMessage(
@@ -166,9 +185,9 @@ export class RequestValidator {
             }
 
             for (const key of this.getPrioritizedValidationKeys(validation)) {
-                const paramValidation = RequestValidator.buildValidationParam(validation[key]);
+                const paramValidation: ParamValidation = RequestValidator.buildValidationParam(validation[key]);
                 if (paramValidation) {
-                    const type = input ? typeof input[key] : undefined;
+                    const type: string = input ? typeof input[key] : undefined;
 
                     // Parse array from url (comma separated string)
                     if (type === 'string' && inUrl && paramValidation.type === 'array') {
@@ -178,13 +197,15 @@ export class RequestValidator {
                         }
                     }
 
-                    errorMessages = errorMessages.concat(this.validateField(input, key, type, paramValidation));
+                    errorMessages = errorMessages.concat(
+                        this.validateField(input, key, type, paramValidation)
+                    );
                     if (errorMessages.length) {
                         if (this.failOnFirstError || paramValidation.terminal === true) {
                             break;
                         }
                         if (paramValidation.terminal instanceof Array) {
-                            if (errorMessages.every((error: ErrorMessage) => paramValidation.terminal.indexOf(error.constraint) !== -1)) {
+                            if (errorMessages.every((error: ErrorMessage) => paramValidation.terminal.indexOf(error.constraint) > -1)) {
                                 break;
                             }
                         }
@@ -202,7 +223,7 @@ export class RequestValidator {
         let errorMessages: ErrorMessage[] = [];
 
         // Check if field was informed
-        if (paramValidation.required === true && ((!input || type === 'undefined') || input[key] === null)) {
+        if (paramValidation.required === true && (!input || type === 'undefined' || input[key] === null)) {
             errorMessages.push(
                 this.getErrorMessage(key, 'required', `Param ${key} is required`)
             );
@@ -210,10 +231,17 @@ export class RequestValidator {
 
         if (input) {
             // Check type
-            const typeValidation = {value: input[key], type: paramValidation.type};
+            const typeValidation: TypeValidation = {
+                value: input[key],
+                type: paramValidation.type
+            };
             if (RequestValidator.checkType(typeValidation) !== true) {
                 errorMessages.push(
-                    this.getErrorMessage(key, 'type', `Param ${key} has invalid type (${paramValidation.type})`)
+                    this.getErrorMessage(
+                        key,
+                        'type',
+                        `Param ${key} has invalid type (${paramValidation.type})`
+                    )
                 );
             }
 
@@ -222,17 +250,24 @@ export class RequestValidator {
             }
 
             // Check array content if needed
-            if (input[key] instanceof Array
-                && RequestValidator.checkArrayType(input[key], paramValidation.arrayType) !== true) {
+            if (input[key] instanceof Array && RequestValidator.checkArrayType(input[key], paramValidation.arrayType) !== true) {
                 errorMessages.push(
-                    this.getErrorMessage(key, 'arrayType', `Param ${key} has invalid content type (${paramValidation.arrayType}[])`)
+                    this.getErrorMessage(
+                        key,
+                        'arrayType',
+                        `Param ${key} has invalid content type (${paramValidation.arrayType}[])`
+                    )
                 );
             }
 
             // Check length
             if (RequestValidator.checkLength(input[key], paramValidation.length) !== true) {
                 errorMessages.push(
-                    this.getErrorMessage(key, 'length', `Param ${key} must have a length of ${paramValidation.length}`)
+                    this.getErrorMessage(
+                        key,
+                        'length',
+                        `Param ${key} must have a length of ${paramValidation.length}`
+                    )
                 );
             }
 
@@ -241,7 +276,11 @@ export class RequestValidator {
             if (paramValidation.min !== 0 && input[key] !== null) {
                 if (RequestValidator.checkMin(input[key], paramValidation.min) !== true) {
                     errorMessages.push(
-                        this.getErrorMessage(key, 'min', `Param ${key} must have a minimum length of ${paramValidation.min}`)
+                        this.getErrorMessage(
+                            key,
+                            'min',
+                            `Param ${key} must have a minimum length of ${paramValidation.min}`
+                        )
                     );
                 }
             }
@@ -249,21 +288,33 @@ export class RequestValidator {
             // Check max
             if (RequestValidator.checkMax(input[key], paramValidation.max) !== true) {
                 errorMessages.push(
-                    this.getErrorMessage(key, 'max', `Param ${key} must have a maximum length of ${paramValidation.max}`)
+                    this.getErrorMessage(
+                        key,
+                        'max',
+                        `Param ${key} must have a maximum length of ${paramValidation.max}`
+                    )
                 );
             }
 
             // Check values
             if (RequestValidator.checkValues(input[key], paramValidation.values) !== true) {
                 errorMessages.push(
-                    this.getErrorMessage(key, 'values', `Param ${key} must belong to [${paramValidation.values.toString()}]`)
+                    this.getErrorMessage(
+                        key,
+                        'values',
+                        `Param ${key} must belong to [${paramValidation.values.toString()}]`
+                    )
                 );
             }
 
             // Check regex
             if (input[key] !== undefined && paramValidation.regex && !paramValidation.regex.test(input[key])) {
                 errorMessages.push(
-                    this.getErrorMessage(key, 'regex', `Param ${key} must match regex ${paramValidation.regex}`)
+                    this.getErrorMessage(
+                        key,
+                        'regex',
+                        `Param ${key} must match regex ${paramValidation.regex}`
+                    )
                 );
             }
 
@@ -304,46 +355,46 @@ export class RequestValidator {
     }
 
     private static checkType(typeValidation: TypeValidation): boolean {
-        const inputType = typeof typeValidation.value;
+        const inputType: string = typeof typeValidation.value;
 
         if (inputType === 'undefined' || typeValidation.value === null) {
             return true;
-        } else if (typeValidation.type === 'numeric') {
-            const isNumeric = !(typeValidation.value.length === 0) && !isNaN(typeValidation.value) ;
+        } else if (supportedNumericTypes.indexOf(typeValidation.type) > -1) {
+            const isNumeric: boolean = (typeValidation.value + '').length > 0 && !isNaN(+typeValidation.value);
             if (isNumeric === true) {
-                typeValidation.value = parseInt(typeValidation.value, 10);
+                if (typeValidation.type === 'integer') {
+                    typeValidation.value = parseInt(typeValidation.value, 10);
+                } else {
+                    typeValidation.value = parseFloat(typeValidation.value);
+                }
             }
-            return isNumeric;
-        } else if (typeValidation.type === 'number') {
-            const isNumeric = !isNaN(typeValidation.value) ;
-            if (isNumeric === true) {
-                typeValidation.value = parseInt(typeValidation.value, 10);
-            }
+
             return isNumeric;
         } else if (typeValidation.type === 'boolean') {
-            const isBoolean = ['0', '1', 'false', 'true', false, true, 0, 1].indexOf(typeValidation.value) !== -1;
+            const isBoolean: boolean = ['0', '1', 'false', 'true', false, true, 0, 1].indexOf(typeValidation.value) > -1;
             if (isBoolean === true) {
-                typeValidation.value = ['1', 'true', true, 1].indexOf(typeValidation.value) !== -1;
+                typeValidation.value = !!isBoolean;
             }
+
             return isBoolean;
         } else if (typeValidation.type === 'date') {
             if (typeof typeValidation.value === 'object' && typeof typeValidation.value.getTime === 'function') {
                 return true;
             }
 
-            const milliseconds = Date.parse(typeValidation.value);
+            const milliseconds: number = Date.parse(typeValidation.value);
             if (isNaN(milliseconds)) {
                 return false;
             }
 
             // We update the input with a valid Date object instead of a string
-            typeValidation.value = new Date();
-            typeValidation.value.setTime(milliseconds);
+            typeValidation.value = new Date(milliseconds);
 
             return true;
         } else if (typeValidation.type === 'array') {
             return typeValidation.value instanceof Array;
         }
+
         return inputType === typeValidation.type;
     }
 
@@ -351,12 +402,14 @@ export class RequestValidator {
         if (input.length === 0 || type === null) {
             return true;
         }
-        for (let i = 0; i < input.length; i += 1) {
-            const valid = (type === 'numeric') ? !isNaN(input[i]) : typeof input[i] === type;
-            if (valid !== true) {
+        for (let i: number = 0; i < input.length; i += 1) {
+            const typeVal: TypeValidation = { value: input[i], type };
+            if (RequestValidator.checkType(typeVal) !== true) {
                 return false;
             }
+            input[i] = typeVal.value;
         }
+
         return true;
     }
 
@@ -364,54 +417,40 @@ export class RequestValidator {
         if (length === null) {
             return true;
         }
-        if (input instanceof Array) {
+
+        if (input instanceof Array || typeof input === 'string') {
             return input.length === length;
         }
-        switch (typeof input) {
-            case 'undefined':
-                return true;
-            case 'number':
-                return true;
-            case 'string':
-                return input.length === length;
-            default:
-                return true;
-        }
+
+        return true;
     }
 
     private static checkMin(input: any, min: number): boolean {
-        if (input instanceof Array) {
+        if (min === null) {
+            return true;
+        }
+
+        if (input instanceof Array || typeof input === 'string') {
             return input.length >= min;
+        } else if (typeof input === 'number') {
+            return input >= min;
         }
-        switch (typeof input) {
-            case 'undefined':
-                return true;
-            case 'number':
-                return input >= min;
-            case 'string':
-                return input.length >= min;
-            default:
-                return true;
-        }
+
+        return true;
     }
 
     private static checkMax(input: any, max: number): boolean {
         if (max === null) {
             return true;
         }
-        if (input instanceof Array) {
+
+        if (input instanceof Array || typeof input === 'string') {
             return input.length <= max;
+        } else if (typeof input === 'number') {
+            return input <= max;
         }
-        switch (typeof input) {
-            case 'undefined':
-                return true;
-            case 'number':
-                return input <= max;
-            case 'string':
-                return input.length <= max;
-            default:
-                return true;
-        }
+
+        return true;
     }
 
     private static checkValues(input: any, values: any[]): boolean {
@@ -419,13 +458,15 @@ export class RequestValidator {
             return true;
         }
         if (input instanceof Array) {
-            for (let i = 0; i < input.length; i += 1) {
-                if (values.indexOf(input[i]) < 0) {
+            for (const inp of input) {
+                if (values.indexOf(inp) < 0) {
                     return false;
                 }
             }
+
             return true;
         }
+
         return values.indexOf(input) >= 0;
     }
 }

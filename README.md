@@ -107,15 +107,15 @@ To validate inputs, just add properties to `url`, `query`, and/or `body` params 
 validation: {
     <url/query/body>: {
         <property_name>: {
-            type: 'valid type', // required field, supported types are 'string', 'number', 'boolean', 'numeric', 'date', array', 'object'
+            type: 'valid type', // required field, supported types are: 'string', 'number', 'boolean', 'numeric', 'integer', 'date', array', 'object'
             required: true|false, // optional, default false, determines is the parameter is required,
             min: 1, // optional, default 1, if 'type' property is 'string' or 'array', determines the minimum length, if 'type' parameter is 'number', determines the minimum value
             max: 5, // optional, default null, if 'type' property is 'string' or 'array', determines the maximum length, if 'type' parameter is 'number', determines the maximum value
             length: 3, // optional, default null, only works if 'type' property is 'string' or 'array', determines the required length,
-            arrayType: 'valid type', // optional, default null, only works if 'type' property is 'array', check if the array content has valid types, supported types: 'string', 'number', 'boolean', 'numeric'
+            arrayType: 'valid type', // optional, default null, only works if 'type' property is 'array', check if the array content has valid types
             values: ['value1', 'value2'], // optional, default null, validates that parameter value belongs to the provided list, if 'type' is 'array', validates every array element
             regex: /^Valid regex$/, // optional, default null, validates parameter value against provided regex
-            terminal: true|false|['type', 'required', 'and so on...'] // optional, default false, when defined as 'true' or array of constraints, returns only error messages associated with this property_name and defined rules 
+            terminal: true|false|['type', 'required', 'and so on...'] // optional, default false, when defined as 'true' or array of constraints, returns only error messages associated with this property_name and defined rules
             format: function(data): data // Function to transform input after validation, see below for more detail
         }
     }
@@ -139,7 +139,7 @@ validation: {
 
 ##### Auto formatting
 
-By default, every `numeric`, `date` and `boolean` inputs will be automatically transformed respectively to valid `number`, `Date` and `boolean` objects after validation. So you can directly use valid objects in your code.
+By default, every `numeric`, `date`, `integer` and `boolean` inputs will be automatically transformed respectively to valid `number`, `Date` and `boolean` objects after validation. So you can directly use valid objects in your code.
 
 ##### Extra formatting, data transformation
 

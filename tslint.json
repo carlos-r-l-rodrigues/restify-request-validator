@@ -1,6 +1,9 @@
 {
     "extends": "@ssense/tslint-config",
     "rules": {
-        "no-any": false
+        "no-any": false,
+        "prefer-template": false,
+        "cyclomatic-complexity": false,
+        "max-func-body-length": false
     }
 }

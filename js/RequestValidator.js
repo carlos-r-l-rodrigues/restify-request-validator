@@ -1,8 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var ParamValidation_1 = require("./ParamValidation");
-var supportedTypes = ['string', 'number', 'boolean', 'numeric', 'date', 'array', 'object'];
-var supportedArrayTypes = ['string', 'number', 'boolean', 'numeric'];
+var supportedNumericTypes = ['number', 'numeric', 'integer'];
+var supportedTypes = [
+    'string',
+    'boolean',
+    'date',
+    'array',
+    'object'
+].concat(supportedNumericTypes);
 var RequestValidator = (function () {
     function RequestValidator(errorHandler) {
         if (errorHandler === void 0) { errorHandler = Error; }
@@ -36,16 +42,19 @@ var RequestValidator = (function () {
             }
             var errorMessages = [];
             if (req.route.validation.hasOwnProperty('url')) {
-                errorMessages = errorMessages.concat(this.validateFields(req.params, req.route.validation.url, true)
-                    .map(function (msg) { return msg.isCustom ? msg.message : "Url: " + msg.message; }));
+                errorMessages = errorMessages.concat(this.validateFields(req.params, req.route.validation.url, true).map(function (msg) {
+                    return msg.isCustom ? msg.message : "Url: " + msg.message;
+                }));
             }
             if (req.route.validation.hasOwnProperty('query')) {
-                errorMessages = errorMessages.concat(this.validateFields(req.query, req.route.validation.query, true)
-                    .map(function (msg) { return msg.isCustom ? msg.message : "Query: " + msg.message; }));
+                errorMessages = errorMessages.concat(this.validateFields(req.query, req.route.validation.query, true).map(function (msg) {
+                    return msg.isCustom ? msg.message : "Query: " + msg.message;
+                }));
             }
             if (req.route.validation.hasOwnProperty('body')) {
-                errorMessages = errorMessages.concat(this.validateFields(req.params, req.route.validation.body, false)
-                    .map(function (msg) { return msg.isCustom ? msg.message : "Body: " + msg.message; }));
+                errorMessages = errorMessages.concat(this.validateFields(req.body, req.route.validation.body, false).map(function (msg) {
+                    return msg.isCustom ? msg.message : "Body: " + msg.message;
+                }));
             }
             if (errorMessages.length) {
                 if (this.failOnFirstError) {
@@ -80,7 +89,7 @@ var RequestValidator = (function () {
         if (validation.hasOwnProperty('length') && typeof validation.length === 'number') {
             paramValidation.length = validation.length;
         }
-        if (validation.hasOwnProperty('arrayType') && supportedArrayTypes.indexOf(validation.arrayType) >= 0) {
+        if (validation.hasOwnProperty('arrayType')) {
             paramValidation.arrayType = validation.arrayType;
         }
         if (validation.hasOwnProperty('values') && validation.values instanceof Array) {
@@ -114,7 +123,9 @@ var RequestValidator = (function () {
                 if (paramValidation) {
                     var type = input ? typeof input[key] : undefined;
                     if (type === 'string' && inUrl && paramValidation.type === 'array') {
-                        input[key] = input[key].split(',').filter(function (element) { return element.length > 0; });
+                        input[key] = input[key]
+                            .split(',')
+                            .filter(function (element) { return element.length > 0; });
                         if (input[key].length === 0) {
                             input[key] = null;
                         }
@@ -125,7 +136,9 @@ var RequestValidator = (function () {
                             return "break";
                         }
                         if (paramValidation.terminal instanceof Array) {
-                            if (errorMessages.every(function (error) { return paramValidation.terminal.indexOf(error.constraint) !== -1; })) {
+                            if (errorMessages.every(function (error) {
+                                return paramValidation.terminal.indexOf(error.constraint) !== -1;
+                            })) {
                                 return "break";
                             }
                         }
@@ -145,19 +158,21 @@ var RequestValidator = (function () {
     };
     RequestValidator.prototype.validateField = function (input, key, type, paramValidation) {
         var errorMessages = [];
-        if (paramValidation.required === true && ((!input || type === 'undefined') || input[key] === null)) {
+        if (paramValidation.required === true && (!input || type === 'undefined' || input[key] === null)) {
             errorMessages.push(this.getErrorMessage(key, 'required', "Param " + key + " is required"));
         }
         if (input) {
-            var typeValidation = { value: input[key], type: paramValidation.type };
+            var typeValidation = {
+                value: input[key],
+                type: paramValidation.type
+            };
             if (RequestValidator.checkType(typeValidation) !== true) {
                 errorMessages.push(this.getErrorMessage(key, 'type', "Param " + key + " has invalid type (" + paramValidation.type + ")"));
             }
             if (typeValidation.value !== undefined) {
                 input[key] = typeValidation.value;
             }
-            if (input[key] instanceof Array
-                && RequestValidator.checkArrayType(input[key], paramValidation.arrayType) !== true) {
+            if (input[key] instanceof Array && RequestValidator.checkArrayType(input[key], paramValidation.arrayType) !== true) {
                 errorMessages.push(this.getErrorMessage(key, 'arrayType', "Param " + key + " has invalid content type (" + paramValidation.arrayType + "[])"));
             }
             if (RequestValidator.checkLength(input[key], paramValidation.length) !== true) {
@@ -210,29 +225,29 @@ var RequestValidator = (function () {
         if (inputType === 'undefined' || typeValidation.value === null) {
             return true;
         }
-        else if (typeValidation.type === 'numeric') {
-            var isNumeric = !(typeValidation.value.length === 0) && !isNaN(typeValidation.value);
+        else if (supportedNumericTypes.indexOf(typeValidation.type) > -1) {
+            var isNumeric = (typeValidation.value + '').length > 0 && !isNaN(+typeValidation.value);
             if (isNumeric === true) {
-                typeValidation.value = parseInt(typeValidation.value, 10);
-            }
-            return isNumeric;
-        }
-        else if (typeValidation.type === 'number') {
-            var isNumeric = !isNaN(typeValidation.value);
-            if (isNumeric === true) {
-                typeValidation.value = parseInt(typeValidation.value, 10);
+                if (typeValidation.type === 'integer') {
+                    typeValidation.value = parseInt(typeValidation.value, 10);
+                }
+                else {
+                    typeValidation.value = parseFloat(typeValidation.value);
+                }
             }
             return isNumeric;
         }
         else if (typeValidation.type === 'boolean') {
             var isBoolean = ['0', '1', 'false', 'true', false, true, 0, 1].indexOf(typeValidation.value) !== -1;
             if (isBoolean === true) {
-                typeValidation.value = ['1', 'true', true, 1].indexOf(typeValidation.value) !== -1;
+                typeValidation.value =
+                    ['1', 'true', true, 1].indexOf(typeValidation.value) !== -1;
             }
             return isBoolean;
         }
         else if (typeValidation.type === 'date') {
-            if (typeof typeValidation.value === 'object' && typeof typeValidation.value.getTime === 'function') {
+            if (typeof typeValidation.value === 'object' &&
+                typeof typeValidation.value.getTime === 'function') {
                 return true;
             }
             var milliseconds = Date.parse(typeValidation.value);
@@ -253,10 +268,11 @@ var RequestValidator = (function () {
             return true;
         }
         for (var i = 0; i < input.length; i += 1) {
-            var valid = (type === 'numeric') ? !isNaN(input[i]) : typeof input[i] === type;
-            if (valid !== true) {
+            var typeVal = { value: input[i], type: type };
+            if (RequestValidator.checkType(typeVal) !== true) {
                 return false;
             }
+            input[i] = typeVal.value;
         }
         return true;
     };
@@ -264,60 +280,43 @@ var RequestValidator = (function () {
         if (length === null) {
             return true;
         }
-        if (input instanceof Array) {
+        if (input instanceof Array || typeof input === 'string') {
             return input.length === length;
         }
-        switch (typeof input) {
-            case 'undefined':
-                return true;
-            case 'number':
-                return true;
-            case 'string':
-                return input.length === length;
-            default:
-                return true;
-        }
+        return true;
     };
     RequestValidator.checkMin = function (input, min) {
-        if (input instanceof Array) {
+        if (min === null) {
+            return true;
+        }
+        if (input instanceof Array || typeof input === 'string') {
             return input.length >= min;
         }
-        switch (typeof input) {
-            case 'undefined':
-                return true;
-            case 'number':
-                return input >= min;
-            case 'string':
-                return input.length >= min;
-            default:
-                return true;
+        else if (typeof input === 'number') {
+            return input >= min;
         }
+        return true;
     };
     RequestValidator.checkMax = function (input, max) {
         if (max === null) {
             return true;
         }
-        if (input instanceof Array) {
+        if (input instanceof Array || typeof input === 'string') {
             return input.length <= max;
         }
-        switch (typeof input) {
-            case 'undefined':
-                return true;
-            case 'number':
-                return input <= max;
-            case 'string':
-                return input.length <= max;
-            default:
-                return true;
+        else if (typeof input === 'number') {
+            return input <= max;
         }
+        return true;
     };
     RequestValidator.checkValues = function (input, values) {
         if (input === undefined || !values || values.length === 0) {
             return true;
         }
         if (input instanceof Array) {
-            for (var i = 0; i < input.length; i += 1) {
-                if (values.indexOf(input[i]) < 0) {
+            for (var _i = 0, input_1 = input; _i < input_1.length; _i++) {
+                var inp = input_1[_i];
+                if (values.indexOf(inp) < 0) {
                     return false;
                 }
             }

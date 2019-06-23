@@ -1,5 +1,5 @@
-import {expect} from 'chai';
-import {RequestValidator} from '../../ts/RequestValidator';
+import { expect } from 'chai';
+import { RequestValidator } from '../../ts/RequestValidator';
 let validator: RequestValidator = null;
 let expected: any = null;
 
@@ -136,7 +136,7 @@ describe('RequestValidator', () => {
                             categories: {type: 'array', required: false, arrayType: 'number'}
                         }
                     }
-                }, params: {
+                }, body: {
                     categories: []
                 }
             },
@@ -152,7 +152,7 @@ describe('RequestValidator', () => {
                             createdAt: {type: 'date', required: true}
                         }
                     }
-                }, params: {
+                }, body: {
                     createdAt: 'foo'
                 }
             },
@@ -168,7 +168,7 @@ describe('RequestValidator', () => {
                             createdAt: {type: 'date', required: true}
                         }
                     }
-                }, params: {
+                }, body: {
                     createdAt: '2016-09-01T18:29:25.642Z'
                 }
             },
@@ -177,31 +177,31 @@ describe('RequestValidator', () => {
     });
 
     it('RequestValidator::validate() date', () => {
-        const date = '2016-10-06T16:32:39.246Z';
-        const req = {
+        const date: string = '2016-10-06T16:32:39.246Z';
+        const req: any = {
             route: {
                 validation: {
                     body: {
                         startedAt: {type: 'date'}
                     }
                 }
-            }, params: {
+            }, body: {
                 startedAt: date
             }
         };
 
         validator.validate(req, null, (err: any) => {
             expect(err).to.equal(undefined, 'Error should be undefined');
-            expect(typeof req.params.startedAt).to.be.equal('object');
-            expect(typeof (<any> req.params.startedAt).getTime).to.be.equal('function');
-            expect((<any> req.params.startedAt).getTime()).to.be.equal(Date.parse(date));
+            expect(typeof req.body.startedAt).to.be.equal('object');
+            expect(typeof (<any> req.body.startedAt).getTime).to.be.equal('function');
+            expect((<any> req.body.startedAt).getTime()).to.be.equal(Date.parse(date));
 
             // double date validation
             validator.validate(req, null, (e: any) => {
                 expect(e).to.equal(undefined, 'Error should be undefined');
-                expect(typeof req.params.startedAt).to.be.equal('object');
-                expect(typeof (<any> req.params.startedAt).getTime).to.be.equal('function');
-                expect((<any> req.params.startedAt).getTime()).to.be.equal(Date.parse(date));
+                expect(typeof req.body.startedAt).to.be.equal('object');
+                expect(typeof (<any> req.body.startedAt).getTime).to.be.equal('function');
+                expect((<any> req.body.startedAt).getTime()).to.be.equal(Date.parse(date));
             });
         });
     });
@@ -261,7 +261,7 @@ describe('RequestValidator', () => {
                             id: {type: 'number', required: false, min: 0}
                         }
                     }
-                }, params: {
+                }, body: {
                     id: null
                 }
             },
@@ -277,7 +277,7 @@ describe('RequestValidator', () => {
                             comments: {type: 'string', required: false}
                         }
                     }
-                }, params: {
+                }, body: {
                     comments: null
                 }
             },
@@ -293,8 +293,8 @@ describe('RequestValidator', () => {
                             comments: {type: 'string', required: true}
                         }
                     }
-                }, params: {
-                   comments: null
+                }, body: {
+                    comments: null
                 }
             },
             null, test
@@ -361,7 +361,7 @@ describe('RequestValidator', () => {
                             enabled: {type: 'boolean', required: true}
                         }
                     }
-                }, params: {
+                }, body: {
                     enabled: true
                 }
             },
@@ -498,8 +498,8 @@ describe('RequestValidator', () => {
                 route: {
                     validation: {
                         url: {
-                            language: {type: 'string', required: true, format: (v: string) => v.toUpperCase() },
-                            count: {type: 'number', required: true, format: (v: number) => v + 1 }
+                            language: {type: 'string', required: true, format: (v: string): string => v.toUpperCase() },
+                            count: {type: 'number', required: true, format: (v: number): number => v + 1 }
                         }
                     }
                 },
@@ -522,7 +522,7 @@ describe('RequestValidator', () => {
                             enabled: {type: 'boolean', required: true}
                         }
                     }
-                }, params: {
+                }, body: {
                     enabled: 'true'
                 }
             },
@@ -537,7 +537,7 @@ describe('RequestValidator', () => {
                             enabled: {type: 'boolean', required: true}
                         }
                     }
-                }, params: {
+                }, body: {
                     enabled: '0'
                 }
             },
@@ -552,7 +552,7 @@ describe('RequestValidator', () => {
                             enabled: {type: 'boolean', required: true}
                         }
                     }
-                }, params: {
+                }, body: {
                     enabled: 0
                 }
             },
@@ -662,7 +662,7 @@ describe('RequestValidator', () => {
     it('RequestValidator with terminal=[given constraints on multiple fields] first terminal executed', () => {
         validator.disableFailOnFirstError();
 
-        expected = 'Query: Param id is required';
+        expected = 'Query: Param description has invalid type (numeric)\nQuery: Param description must have a length of 3';
         validator.validate(
             {
                 route: {
@@ -719,7 +719,7 @@ describe('RequestValidator', () => {
                             }
                         }
                     },
-                    params: {
+                    body: {
                         allowedField: true,
                         forbiddenOther: 'foo',
                         forbiddenAnother: 'foo'
@@ -909,7 +909,7 @@ describe('RequestValidator', () => {
                                 regex: 'Website must start with http://'
                             }
                         }
-                    }, params: {
+                    }, body: {
                         website: 'test'
                     }
                 },
@@ -955,6 +955,52 @@ describe('RequestValidator', () => {
                 },
                 null, test
             );
+        });
+
+        it('RequestValidator::validate() should convert to respective types', () => {
+            const body: any = {
+                id: '3456',
+                description: 'aaaa',
+                startDate: '2019-06-21',
+                numberList: ['1', '3', '9'],
+                priceList: ['1.78', '3.49', '9.6987'],
+                intList: ['1.78', '3.49', '9.6987'],
+                doubleValue: '154.784987',
+                integerVal: '154.98'
+            };
+            expected = undefined;
+            validator.validate(
+                {
+                    route: {
+                        validation: {
+                            body: {
+                                id: {type: 'integer', required: true, length: 3},
+                                description: {type: 'string', required: true, min: 2},
+                                startDate: {type: 'date', required: true },
+                                numberList: {type: 'array', required: true, arrayType: 'numeric'},
+                                priceList: {type: 'array', required: true, arrayType: 'number'},
+                                intList: {type: 'array', required: true, arrayType: 'integer'},
+                                doubleValue: {type: 'numeric', required: true},
+                                integerVal: { type: 'integer', required: true}
+                            }
+                        }
+                    },
+                    body
+                },
+                null,
+                test
+            );
+
+            expect(body).to.deep.equal({
+                id: 3456,
+                description: 'aaaa',
+                startDate: new Date('2019-06-21'),
+                numberList: [1, 3, 9],
+                priceList: [1.78, 3.49, 9.6987],
+                intList: [1, 3, 9],
+                doubleValue: 154.784987,
+                integerVal: 154
+            });
         });
     });
 });
