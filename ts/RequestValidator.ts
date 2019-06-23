@@ -200,6 +200,7 @@ export class RequestValidator {
                     errorMessages = errorMessages.concat(
                         this.validateField(input, key, type, paramValidation)
                     );
+
                     if (errorMessages.length) {
                         if (this.failOnFirstError || paramValidation.terminal === true) {
                             break;
@@ -342,15 +343,8 @@ export class RequestValidator {
 
     private getPrioritizedValidationKeys(validation: any): string[] {
         // Allows to determine an order on which the validation should happen (which fields first)
-        return Object.keys(validation).sort((a: any, b: any) => {
-            if (validation[a].terminal && validation[a].terminal !== false) {
-                return -1;
-            }
-            if (validation[b].terminal && validation[b].terminal !== false) {
-                return 1;
-            }
-
-            return 0;
+        return Object.keys(validation).sort((a: string, b: string) => {
+            return +!!validation[b].terminal - +!!validation[a].terminal;
         });
     }
 

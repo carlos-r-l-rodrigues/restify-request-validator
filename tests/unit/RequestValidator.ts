@@ -662,7 +662,7 @@ describe('RequestValidator', () => {
     it('RequestValidator with terminal=[given constraints on multiple fields] first terminal executed', () => {
         validator.disableFailOnFirstError();
 
-        expected = 'Query: Param description has invalid type (numeric)\nQuery: Param description must have a length of 3';
+        expected = 'Query: Param id is required';
         validator.validate(
             {
                 route: {
