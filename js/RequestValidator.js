@@ -270,9 +270,6 @@ var RequestValidator = (function () {
         return true;
     };
     RequestValidator.checkMin = function (input, min) {
-        if (min === null) {
-            return true;
-        }
         if (input instanceof Array || typeof input === 'string') {
             return input.length >= min;
         }

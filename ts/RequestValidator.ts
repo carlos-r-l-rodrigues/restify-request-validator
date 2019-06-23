@@ -422,10 +422,6 @@ export class RequestValidator {
     }
 
     private static checkMin(input: any, min: number): boolean {
-        if (min === null) {
-            return true;
-        }
-
         if (input instanceof Array || typeof input === 'string') {
             return input.length >= min;
         } else if (typeof input === 'number') {
